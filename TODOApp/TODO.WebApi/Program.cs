@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using TODO.WebApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,14 +14,36 @@ builder.Services.AddDbContext<TODOAppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    var services = scope.ServiceProvider;
+
+    try
+    {
+        var context = services.GetRequiredService<TODOAppDbContext>();
+        if (context.Database.GetPendingMigrations().Any())
+        {
+            context.Database.Migrate();
+        }
+    }
+    catch (Exception ex)
+    {
+        // Aquí puedes manejar cualquier error que pueda surgir, por ejemplo, utilizando un logger
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Un error ocurrió al aplicar las migraciones.");
+    }
 }
+
+// Configure the HTTP request pipeline.
+//if (app.Environment.IsDevelopment())
+//{
+app.UseSwagger();
+    app.UseSwaggerUI();
+//}
 
 app.UseRouting();
 app.UseEndpoints(endpoints =>
