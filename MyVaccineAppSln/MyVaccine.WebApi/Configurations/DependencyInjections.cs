@@ -1,5 +1,6 @@
 ﻿using MyVaccine.WebApi.Repositories.Contracts;
 using MyVaccine.WebApi.Repositories.Implementations;
+using MyVaccine.WebApi.Services;
 using MyVaccine.WebApi.Services.Contracts;
 using MyVaccine.WebApi.Services.Implementations;
 
@@ -16,6 +17,13 @@ public static class DependencyInjections
         #region Services Injection
 
         services.AddScoped<IUserService, UserService> ();
+        #endregion
+
+        #region Only for  testing propourses
+        services.AddScoped<IGuidGeneratorScope, GuidServiceScope>();
+        services.AddTransient<IGuidGeneratorTrasient, GuidServiceTransient>();
+        services.AddSingleton<IGuidGeneratorSingleton, GuidServiceSingleton>();
+        services.AddScoped<IGuidGeneratorDeep, GuidGeneratorDeep>();
         #endregion
         return services;
     }
