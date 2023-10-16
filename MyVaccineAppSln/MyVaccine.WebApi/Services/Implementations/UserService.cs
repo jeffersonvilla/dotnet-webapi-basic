@@ -1,10 +1,13 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Azure.Core;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MyVaccine.WebApi.Dtos;
 using MyVaccine.WebApi.Literals;
+using MyVaccine.WebApi.Models;
 using MyVaccine.WebApi.Repositories.Contracts;
 using MyVaccine.WebApi.Services.Contracts;
 
@@ -26,16 +29,17 @@ public class UserService : IUserService
         {
             var result = await _userRepository.AddUser(request);
 
-            if(result != null) { 
+            if (result != null)
+            {
                 response.IsSuccess = result.Succeeded;
-                response.Errors = result?.Errors?.Select(x=>x.Description).ToArray()?? new string[]{ };
+                response.Errors = result?.Errors?.Select(x => x.Description).ToArray() ?? new string[] { };
             }
 
         }
         catch (Exception ex)
         {
             response.IsSuccess = false;
-            response.Errors= new string[] { ex.Message };
+            response.Errors = new string[] { ex.Message };
         }
 
         return response;
@@ -69,7 +73,7 @@ public class UserService : IUserService
                 var tokenresult = new JwtSecurityTokenHandler().WriteToken(token);
                 response.Token = tokenresult;
                 response.Expiration = token.ValidTo;
-                response.IsSuccess= true;
+                response.IsSuccess = true;
             }
             else
             {
@@ -92,7 +96,7 @@ public class UserService : IUserService
         {
             var user = await _userManager.FindByNameAsync(email);
 
-            if (user != null )
+            if (user != null)
             {
                 var claims = new[]
                 {
@@ -113,7 +117,7 @@ public class UserService : IUserService
                 var tokenresult = new JwtSecurityTokenHandler().WriteToken(token);
                 response.Token = tokenresult;
                 response.Expiration = token.ValidTo;
-                response.IsSuccess= true;
+                response.IsSuccess = true;
             }
             else
             {
@@ -128,5 +132,13 @@ public class UserService : IUserService
 
         return response;
 
+    }
+
+    public async Task<User> GetUserInfo(string email)
+    {
+        var user = await _userManager.FindByNameAsync(email);
+
+        var response = await _userRepository.FindByAsNoTracking(x => x.AspNetUserId == user.Id).FirstOrDefaultAsync();
+        return response;
     }
 }
