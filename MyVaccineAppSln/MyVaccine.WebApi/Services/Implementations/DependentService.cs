@@ -33,7 +33,7 @@ public class DependentService : IDependentService
     public async Task<DependentResponseDto> Delete(int id)
     {
         var dependents = await _dependentRepository.FindBy(x => x.DependentId == id).FirstOrDefaultAsync();
-    
+
         await _dependentRepository.Delete(dependents);
         var response = _mapper.Map<DependentResponseDto>(dependents);
         return response;
@@ -48,8 +48,14 @@ public class DependentService : IDependentService
 
     public async Task<DependentResponseDto> GetById(int id)
     {
-        var dependents = await _dependentRepository.FindByAsNoTracking(x=>x.DependentId==id).FirstOrDefaultAsync();
+        var dependents = await _dependentRepository.FindByAsNoTracking(x => x.DependentId == id).FirstOrDefaultAsync();
         var response = _mapper.Map<DependentResponseDto>(dependents);
+        return response;
+    }
+    public async Task<IEnumerable<DependentResponseDto>> GetDependentsByUserId(int userId)
+    {
+        var dependents = await _dependentRepository.FindByAsNoTracking(x => x.UserId == userId).ToListAsync();
+        var response = _mapper.Map<IEnumerable<DependentResponseDto>>(dependents);
         return response;
     }
 
@@ -57,7 +63,7 @@ public class DependentService : IDependentService
     {
         var dependents = await _dependentRepository.FindBy(x => x.DependentId == id).FirstOrDefaultAsync();
         dependents.Name = request.Name;
-        dependents.DateOfBirth= request.DateOfBirth;
+        dependents.DateOfBirth = request.DateOfBirth;
         dependents.UserId = request.UserId;
 
         await _dependentRepository.Update(dependents);

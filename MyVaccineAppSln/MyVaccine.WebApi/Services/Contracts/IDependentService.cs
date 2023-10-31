@@ -9,4 +9,6 @@ public interface IDependentService
     Task<DependentResponseDto> Add(DependentRequestDto request);
     Task<DependentResponseDto> Update(DependentRequestDto request, int id);
     Task<DependentResponseDto> Delete(int id);
+
+    Task<IEnumerable<DependentResponseDto>> GetDependentsByUserId(int userId);
 }

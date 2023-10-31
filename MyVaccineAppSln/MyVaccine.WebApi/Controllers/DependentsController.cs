@@ -1,5 +1,6 @@
 ﻿using System.Security.AccessControl;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MyVaccine.WebApi.Dtos.Dependent;
@@ -7,6 +8,7 @@ using MyVaccine.WebApi.Models;
 using MyVaccine.WebApi.Services.Contracts;
 
 namespace MyVaccine.WebApi.Controllers;
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class DependentsController : ControllerBase
@@ -27,10 +29,18 @@ public class DependentsController : ControllerBase
         return Ok(dependents);
     }
 
+    [AllowAnonymous]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
         var dependents = await _dependentService.GetById(id);
+        return Ok(dependents);
+    }
+
+    [HttpGet("get-dependents-by-userid/{userId}")]
+    public async Task<IActionResult> GetDependensByUserId(int userId)
+    {
+        var dependents = await _dependentService.GetDependentsByUserId(userId);
         return Ok(dependents);
     }
 
@@ -52,38 +62,28 @@ public class DependentsController : ControllerBase
     //    return CreatedAtAction(nameof(GetById), new { id = dependent.Id }, dependent);
     //}
 
-    //[HttpPut("{id}")]
-    //public async Task<IActionResult> Update(int id, DependentsDto dependentsDto)
-    //{
-    //    var validationResult = await _validator.ValidateAsync(dependentsDto);
-    //    if (!validationResult.IsValid)
-    //    {
-    //        return BadRequest(validationResult.Errors);
-    //    }
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, DependentRequestDto dependentsDto)
+    {
 
-    //    var dependent = _dependentRepository.GetAll().FirstOrDefault(d => d.Id == id);
-    //    if (dependent == null)
-    //    {
-    //        return NotFound();
-    //    }
+        var dependent =  await _dependentService.Update(dependentsDto,id);
+        if (dependent == null)
+        {
+            return NotFound();
+        }       
 
-    //    _mapper.Map(dependentsDto, dependent);
-    //    await _dependentRepository.Update(dependent);
+        return Ok(dependent);
+    }
 
-    //    return NoContent();
-    //}
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete( int id)
+    {
+        var dependent = await _dependentService.Delete(id);
+        if (dependent == null)
+        {
+            return NotFound();
+        }
 
-    //[HttpDelete("{id}")]
-    //public async Task<IActionResult> Delete(int id)
-    //{
-    //    var dependent = _dependentRepository.GetAll().FirstOrDefault(d => d.Id == id);
-    //    if (dependent == null)
-    //    {
-    //        return NotFound();
-    //    }
-
-    //    await _dependentRepository.Delete(dependent);
-
-    //    return NoContent();
-    //}
+        return Ok(dependent);
+    }
 }
