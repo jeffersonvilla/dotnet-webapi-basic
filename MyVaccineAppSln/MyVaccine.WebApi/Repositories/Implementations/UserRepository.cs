@@ -36,14 +36,6 @@ public class UserRepository : BaseRepository<User>,IUserRepository
                 return response;
             }
 
-            var roleResult = await _userManager.AddToRoleAsync(user, "user");
-            if (!roleResult.Succeeded)
-            {
-                await _userManager.DeleteAsync(user);
-                return roleResult;
-            }
-            
-
             var newUser = new User
             {
                 FirstName = request.FirstName,
