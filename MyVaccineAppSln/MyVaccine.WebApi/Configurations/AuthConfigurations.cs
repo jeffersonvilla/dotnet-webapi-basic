@@ -38,12 +38,15 @@ public static class AuthConfigurations
                 ValidateAudience = false,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
+                //NameClaimType = "email",
+                //RoleClaimType = "role",
                 //ValidIssuer = "tu_issuer",
                 //ValidAudience = "tu_audience",
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable(MyVaccineLiterals.JWT_KEY))),
                 //ClockSkew = TimeSpan.Zero // Evita un desfase de tiempo (opcional)
             };
         });
+
         return services;
     }
 }

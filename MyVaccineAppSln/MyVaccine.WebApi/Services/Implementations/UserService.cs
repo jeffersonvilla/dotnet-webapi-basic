@@ -1,11 +1,13 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Azure.Core;
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MyVaccine.WebApi.Dtos;
+using MyVaccine.WebApi.Dtos.User;
+using MyVaccine.WebApi.Dtos.Vaccine;
 using MyVaccine.WebApi.Literals;
 using MyVaccine.WebApi.Models;
 using MyVaccine.WebApi.Repositories.Contracts;
@@ -17,10 +19,15 @@ public class UserService : IUserService
 {
     private readonly UserManager<IdentityUser> _userManager;
     private readonly IUserRepository _userRepository;
-    public UserService(UserManager<IdentityUser> userManager, IUserRepository userRepository)
+    private readonly IFamilyGroupRepository<FamilyGroup> _familyGroupRepository;
+    private readonly IMapper _mapper;
+    public UserService(UserManager<IdentityUser> userManager, IUserRepository userRepository,
+        IMapper mapper, IFamilyGroupRepository<FamilyGroup> familyGroupRepository)
     {
         _userManager = userManager;
         _userRepository = userRepository;
+        _familyGroupRepository = familyGroupRepository;
+        _mapper = mapper;
     }
     public async Task<AuthResponseDto> AddUserAsync(RegisterRequetDto request)
     {
@@ -134,11 +141,78 @@ public class UserService : IUserService
 
     }
 
-    public async Task<User> GetUserInfo(string email)
+    public async Task<UserResponseDto> GetUserInfo(string email)
     {
-        var user = await _userManager.FindByNameAsync(email);
+        var identityUser = await _userManager.FindByNameAsync(email);
 
-        var response = await _userRepository.FindByAsNoTracking(x => x.AspNetUserId == user.Id).FirstOrDefaultAsync();
-        return response;
+        var user = await _userRepository
+            .FindBy(x => x.AspNetUserId == identityUser.Id)
+            .Include(u => u.FamilyGroups)
+            .Include(u => u.Allergies)
+            .Include(u => u.VaccineRecords)
+            .Include(u => u.Dependents)
+            .FirstOrDefaultAsync();
+
+
+        return _mapper.Map<UserResponseDto>(user);
+    }
+
+    public async Task<UserResponseDto> SetFamilyGroup(int userId, int familyGroupId)
+    {
+        var user = await _userRepository.
+            GetById(userId, include: query => query.Include(v => v.FamilyGroups));
+
+        if (user == null)
+        {
+            throw new KeyNotFoundException($"User with id {userId} not found.");
+        }
+
+        var category = await _familyGroupRepository
+            .FindBy(x => x.FamilyGroupId == familyGroupId).FirstOrDefaultAsync();
+
+        if (category == null)
+        {
+            throw new KeyNotFoundException($"Family group with id {familyGroupId} not found.");
+        }
+
+        if (user.FamilyGroups == null)
+        {
+            user.FamilyGroups= new List<FamilyGroup>();
+
+        }
+
+        if (user.FamilyGroups.Any(c => c.FamilyGroupId == familyGroupId))
+        {
+            return _mapper.Map<UserResponseDto>(user);
+        }
+
+        user.FamilyGroups.Add(category);
+
+        await _userRepository.Update(user);
+
+        return _mapper.Map<UserResponseDto>(user);
+    }
+
+    public async Task<UserResponseDto> RemoveFamilyGroup(int userId, int familyGroupId)
+    {
+        var user = await _userRepository
+            .GetById(userId, include: query => query.Include(v => v.FamilyGroups));
+
+        if (user == null)
+        {
+            throw new KeyNotFoundException($"User with id {userId} not found.");
+        }
+
+        var familyGroupToRemove = user.FamilyGroups.FirstOrDefault(c => c.FamilyGroupId == familyGroupId);
+
+        if (familyGroupToRemove == null)
+        {
+            throw new KeyNotFoundException($"Family group with id {familyGroupId} not found in user.");
+        }
+
+        user.FamilyGroups.Remove(familyGroupToRemove);
+        await _userRepository.Update(user);
+
+        return _mapper.Map<UserResponseDto>(user);
     }
 }

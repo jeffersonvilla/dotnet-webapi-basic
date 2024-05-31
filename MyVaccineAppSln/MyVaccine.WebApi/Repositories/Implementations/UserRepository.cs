@@ -1,5 +1,6 @@
 ﻿using System.Transactions;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using MyVaccine.WebApi.Dtos;
 using MyVaccine.WebApi.Models;
 using MyVaccine.WebApi.Repositories.Contracts;
@@ -35,6 +36,14 @@ public class UserRepository : BaseRepository<User>,IUserRepository
                 return response;
             }
 
+            var roleResult = await _userManager.AddToRoleAsync(user, "user");
+            if (!roleResult.Succeeded)
+            {
+                await _userManager.DeleteAsync(user);
+                return roleResult;
+            }
+            
+
             var newUser = new User
             {
                 FirstName = request.FirstName,
@@ -42,7 +51,8 @@ public class UserRepository : BaseRepository<User>,IUserRepository
                 AspNetUserId = user.Id
             };
 
-            await _context.Users.AddAsync(newUser);
+            var res = await _context.Users.AddAsync(newUser);
+
             await _context.SaveChangesAsync();
             scope.Complete();
         }
@@ -58,5 +68,24 @@ public class UserRepository : BaseRepository<User>,IUserRepository
 
         //var result = await _userManager.CreateAsync(user, model.Password);
         return response;
+    }
+
+    public async Task<User> GetById(int id, Func<IQueryable<User>, IQueryable<User>> include = null)
+    {
+        IQueryable<User> query = _context.Set<User>();
+
+        if (include != null)
+        {
+            query = include(query);
+        }
+
+        return await query.FirstOrDefaultAsync(v => v.UserId == id);
+    }
+
+    public async Task<List<User>> GetAllByIds(IEnumerable<int> ids)
+    {
+        return await _context.Set<User>()
+            .Where(v => ids.Contains(v.UserId))
+            .ToListAsync();
     }
 }

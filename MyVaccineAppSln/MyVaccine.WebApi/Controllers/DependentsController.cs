@@ -1,12 +1,11 @@
-﻿using System.Security.AccessControl;
-using FluentValidation;
-using Microsoft.AspNetCore.Http;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyVaccine.WebApi.Dtos.Dependent;
-using MyVaccine.WebApi.Models;
 using MyVaccine.WebApi.Services.Contracts;
 
 namespace MyVaccine.WebApi.Controllers;
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class DependentsController : ControllerBase
@@ -46,44 +45,37 @@ public class DependentsController : ControllerBase
         return Ok(dependents);
     }
 
-    //    var dependent = _mapper.Map<Dependent>(dependentsDto);
-    //    await _dependentRepository.Add(dependent);
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, DependentRequestDto dependentDto)
+    {
+        var validationResult = await _validator.ValidateAsync(dependentDto);
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(validationResult.Errors);
+        }
 
-    //    return CreatedAtAction(nameof(GetById), new { id = dependent.Id }, dependent);
-    //}
+        try
+        {
+            DependentResponseDto updatedDependent = await _dependentService.Update(dependentDto, id);
+            return Ok(updatedDependent);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
 
-    //[HttpPut("{id}")]
-    //public async Task<IActionResult> Update(int id, DependentsDto dependentsDto)
-    //{
-    //    var validationResult = await _validator.ValidateAsync(dependentsDto);
-    //    if (!validationResult.IsValid)
-    //    {
-    //        return BadRequest(validationResult.Errors);
-    //    }
-
-    //    var dependent = _dependentRepository.GetAll().FirstOrDefault(d => d.Id == id);
-    //    if (dependent == null)
-    //    {
-    //        return NotFound();
-    //    }
-
-    //    _mapper.Map(dependentsDto, dependent);
-    //    await _dependentRepository.Update(dependent);
-
-    //    return NoContent();
-    //}
-
-    //[HttpDelete("{id}")]
-    //public async Task<IActionResult> Delete(int id)
-    //{
-    //    var dependent = _dependentRepository.GetAll().FirstOrDefault(d => d.Id == id);
-    //    if (dependent == null)
-    //    {
-    //        return NotFound();
-    //    }
-
-    //    await _dependentRepository.Delete(dependent);
-
-    //    return NoContent();
-    //}
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        try
+        {
+            DependentResponseDto deletedDependent = await _dependentService.Delete(id);
+            return Ok(deletedDependent);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
 }

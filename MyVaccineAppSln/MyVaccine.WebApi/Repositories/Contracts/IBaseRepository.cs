@@ -15,4 +15,5 @@ public interface IBaseRepository<T>
     Task Patch(T entity);
     Task PatchRange(List<T> entities);
     IQueryable<T> FindByAsNoTracking(Expression<Func<T, bool>> predicate);
+
 }

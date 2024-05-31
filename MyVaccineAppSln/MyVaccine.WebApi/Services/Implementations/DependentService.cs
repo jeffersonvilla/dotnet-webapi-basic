@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using MyVaccine.WebApi.Dtos.Dependent;
 using MyVaccine.WebApi.Models;
 using MyVaccine.WebApi.Repositories.Contracts;
+using MyVaccine.WebApi.Repositories.Implementations;
 using MyVaccine.WebApi.Services.Contracts;
 
 namespace MyVaccine.WebApi.Services.Implementations;
@@ -11,15 +12,26 @@ namespace MyVaccine.WebApi.Services.Implementations;
 public class DependentService : IDependentService
 {
     private readonly IBaseRepository<Dependent> _dependentRepository;
+    private readonly IUserRepository _userRepository;
     private readonly IMapper _mapper;
-    public DependentService(IBaseRepository<Dependent> dependentRepository, IMapper mapper)
+    public DependentService(IBaseRepository<Dependent> dependentRepository, IMapper mapper
+        , IUserRepository userRepository)
     {
         _dependentRepository = dependentRepository;
         _mapper = mapper;
+        _userRepository = userRepository;
     }
     public async Task<DependentResponseDto> Add(DependentRequestDto request)
     {
-        // var dependents = await _dependentRepository.FindBy(x => x.DependentId == id).FirstOrDefaultAsync();
+
+        var user = await _userRepository
+            .FindBy(x => x.UserId == request.UserId).FirstOrDefaultAsync();
+
+        if (user == null)
+        {
+            throw new KeyNotFoundException($"User with ID {request.UserId} does not exist.");
+        }
+
         var dependents = new Dependent();
         dependents.Name = request.Name;
         dependents.DateOfBirth = request.DateOfBirth;
@@ -55,6 +67,15 @@ public class DependentService : IDependentService
 
     public async Task<DependentResponseDto> Update(DependentRequestDto request, int id)
     {
+
+        var user = await _userRepository
+            .FindBy(x => x.UserId == request.UserId).FirstOrDefaultAsync();
+
+        if (user == null)
+        {
+            throw new KeyNotFoundException($"User with ID {request.UserId} does not exist.");
+        }
+
         var dependents = await _dependentRepository.FindBy(x => x.DependentId == id).FirstOrDefaultAsync();
         dependents.Name = request.Name;
         dependents.DateOfBirth= request.DateOfBirth;

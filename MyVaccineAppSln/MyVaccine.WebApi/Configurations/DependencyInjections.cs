@@ -1,4 +1,7 @@
-﻿using MyVaccine.WebApi.Models;
+﻿using MyFamilyGroup.WebApi.Repositories.Implementations;
+using MyFamilyGroup.WebApi.Services.Implementations;
+using MyUser.WebApi.Services.Contracts;
+using MyVaccine.WebApi.Models;
 using MyVaccine.WebApi.Repositories.Contracts;
 using MyVaccine.WebApi.Repositories.Implementations;
 using MyVaccine.WebApi.Services;
@@ -14,12 +17,23 @@ public static class DependencyInjections
         #region Repositories Injection
         services.AddScoped<IUserRepository, UserRepository> ();
         services.AddScoped<IBaseRepository<Dependent>, BaseRepository<Dependent>> ();
+        services.AddScoped<IVaccineCategoryRepository<VaccineCategory>, VaccineCategoryRepository>();
+        services.AddScoped<IVaccineRepository<Vaccine>, VaccineRepository>();
+        services.AddScoped<IFamilyGroupRepository<FamilyGroup>, FamilyGroupRepository>();
+        services.AddScoped<IAllergyRepository<Allergy>, AllergyRepository>();
+        services.AddScoped<IVaccineRecordRepository<VaccineRecord>, VaccineRecordRepository>();
+
         #endregion
 
         #region Services Injection
 
         services.AddScoped<IUserService, UserService> ();
         services.AddScoped<IDependentService, DependentService> ();
+        services.AddScoped<IVaccineCategoryService, VaccineCategoryService>();
+        services.AddScoped<IVaccineService, VaccineService>();
+        services.AddScoped<IFamilyGroupService, FamilyGroupService>();
+        services.AddScoped<IAllergyService, AllergyService>();
+        services.AddScoped<IVaccineRecordService, VaccineRecordService>();
         #endregion
 
         #region Only for  testing propourses
